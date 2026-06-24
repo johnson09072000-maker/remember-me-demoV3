@@ -28,7 +28,7 @@
             background-size: cover;
             background-position: center;
             z-index: 1;
-            transition: background-image 1.2s ease-in-out; /* 讓背景切換時像電影般淡入淡出 */
+            transition: background-image 1.2s ease-in-out; /* 讓背景切換時有漸變的溫暖視覺感 */
         }
 
         /* 疊加一層淡淡的遮罩，提升 3D 模型的立體感與文字識別度 */
@@ -38,7 +38,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%);
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.5) 100%);
             z-index: 1;
             pointer-events: none;
         }
@@ -102,4 +102,122 @@
             border-radius: 24px;
             width: 85%;
             max-width: 480px;
-            box-shadow: 0 12px 30px rgba
+            box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #fff;
+        }
+
+        .slider-label {
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+        
+        .slider-label strong {
+            color: #ffb84d;
+            font-size: 1.1rem;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            -webkit-appearance: none;
+            background: rgba(255,255,255,0.2);
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: #ffb84d;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(255,184,77,0.6);
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.25);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="bgContainer" class="background-container"></div>
+    <div class="background-overlay"></div>
+
+    <div class="status-card">
+        <h2 id="timeTitle">同步中...</h2>
+        <p id="behaviorDesc">正在感應寵物的生活作息軌跡...</p>
+    </div>
+
+    <model-viewer 
+        id="petModel"
+        src="https://johnson09072000-maker.github.io/remember-me-demo/fox.glb" 
+        camera-controls
+        auto-rotate
+        rotation="0deg 0deg 0deg"
+        camera-orbit="0deg 75deg 3.5m"
+        shadow-intensity="12"
+        shadow-softness="0.8"
+        environment-image="legacy"
+        exposure="1"
+        autoplay>
+    </model-viewer>
+
+    <div class="control-panel">
+        <div class="slider-container">
+            <span class="slider-label">⏳ 簡報展示時空軸：<strong id="sliderTimeDisplay">00:00</strong></span>
+            <input type="range" id="timeSlider" min="0" max="23" value="12">
+        </div>
+    </div>
+
+    <script>
+        // 24小時六大作息黃金劇本數據庫
+        // 背景圖 URL 已為您選配高品質的溫馨空間氛圍，您可以隨時替換成客製化圖片
+        const TIME_SCHEDULE = [
+            {
+                start: 4, end: 8,
+                title: "🌅 溫馨的主臥室",
+                desc: "【晨光伸懶腰與輕拍喚醒】狐狸在床邊醒來，伸個大大的懶腰，然後輕輕用頭蹭蹭枕頭或用小掌拍拍畫面。",
+                animation: "Survey", // 狐狸內建動作：坐姿環顧四周
+                bgUrl: "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200"
+            },
+            {
+                start: 8, end: 12,
+                title: "☀️ 陽光灑落的客廳窗邊",
+                desc: "【日光浴與專心抓癢】趴在暖呼呼的陽光墊子上，慵懶地搖尾巴、舔毛清理自己，偶爾耳朵動一動。",
+                animation: "Walk", // 狐狸內建動作：慢走/原地踏步
+                bgUrl: "https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?q=80&w=1200"
+            },
+            {
+                start: 12, end: 16,
+                title: "🛋️ 客廳舒適的沙發上",
+                desc: "【午後雷打不動的午睡深度沉浸】整隻寵物縮成一個毛球（或是四腳朝天翻肚肚），沉浸在香甜的午睡夢鄉中。",
+                animation: "Sleep", // 狐狸內建動作：躺下安穩睡覺
+                bgUrl: "https://images.unsplash.com/photo-1540518614846-7eded433c457?q=80&w=1200"
+            },
+            {
+                start: 16, end: 20,
+                title: "🌳 綠意盎然的社區公園",
+                desc: "【活力滿滿的放風與接飛盤互動】在草地上興奮地小跑步，接著畫面中會飛出一個飛盤，寵物精準地跳起來咬住。",
+                animation: "Run", // 狐狸內建動作：興奮跑步
+                bgUrl: "https://images.unsplash.com/photo-1519331379826-f10be5486c6f?q=80&w=1200"
+            },
+            {
+                start: 20, end: 24,
+                title: "🍳 溫暖的廚房與飯廳",
+                desc: "【瘋狂乾飯與飯後滿足的撒嬌】圍著空飯碗興奮地轉圈圈，接著低頭大口大口乾飯，吃飽後開心地搖尾巴求摸摸。",
+                animation: "Eat", // 狐狸內建動作：低頭啃咬與覓食
+                bgUrl
