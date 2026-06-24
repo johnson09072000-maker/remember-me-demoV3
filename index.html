@@ -3,174 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Remember Me - 24H 實時生命軸與變幻系統</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap" rel="stylesheet">
-    <script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js"></script>
+    <title>REMEMBERME - 寵物數位分身 24H 作息 Demo</title>
+    
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+
     <style>
-        body { font-family: 'Microsoft JhengHei', sans-serif; background-color: #050811; color: #E0E0E0; }
-        .serif-font { font-family: 'Noto Serif TC', serif; }
-        .neon-glow { box-shadow: 0 0 30px rgba(34, 211, 238, 0.3); border-color: rgba(34, 211, 238, 0.5); }
-        .bg-cyber { background: radial-gradient(circle at top, #0f1a30 0%, #050811 100%); }
-        .live-dot { animation: blink 1.5s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
-        /* 橫向時間軸拖動條美化 */
-        input[type="range"] { -webkit-appearance: none; background: #1e293b; border-radius: 9999px; width: 100%; height: 6px; }
-        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; background: #22d3ee; cursor: pointer; box-shadow: 0 0 10px #22d3ee; }
-    </style>
-</head>
-<body class="bg-cyber flex flex-col items-center justify-center min-h-screen p-4">
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #000;
+        }
 
-    <div class="w-full max-w-sm bg-slate-900/95 rounded-[40px] p-6 border-2 neon-glow relative overflow-hidden">
+        /* 滿版背景，用來載入不同時段的溫馨環境氛圍圖 */
+        .background-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            transition: background-image 1.2s ease-in-out; /* 讓背景切換時像電影般淡入淡出 */
+        }
+
+        /* 疊加一層淡淡的遮罩，提升 3D 模型的立體感與文字識別度 */
+        .background-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.5) 100%);
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Model Viewer 疊加在背景上方 */
+        model-viewer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            --poster-color: transparent;
+        }
+
+        /* 上方的狀態顯示看板 (情感共鳴的核心) */
+        .status-card {
+            position: absolute;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 18px 25px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            text-align: center;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            pointer-events: none;
+            width: 85%;
+            max-width: 420px;
+            border: 1px solid rgba(255,255,255,0.4);
+        }
+
+        .status-card h2 { 
+            margin: 0; 
+            font-size: 1.25rem; 
+            color: #2c3e50; 
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
         
-        <div class="flex justify-between items-center text-[10px] text-cyan-400/80 tracking-widest uppercase mb-4">
-            <span class="flex items-center gap-1">
-                <span class="w-2 h-2 bg-emerald-400 rounded-full live-dot"></span>
-                <span id="stream-title">Remember Me 實時通話流</span>
-            </span>
-            <span id="time-display">00:00:00</span>
-        </div>
-
-        <div class="w-full bg-slate-950 rounded-3xl overflow-hidden border border-slate-800 aspect-[3/4] relative flex flex-col justify-between p-4 shadow-2xl">
-            
-            <div class="flex justify-between items-start w-full z-10">
-                <div class="bg-black/70 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10 max-w-[80%]">
-                    <p id="pet-name" class="text-[11px] font-bold text-white tracking-wide">陳小晃 (Lucky)</p>
-                    <p id="current-habit" class="text-[9px] text-cyan-400 truncate">🐾 正在載入實時生活流...</p>
-                </div>
-                <span id="mode-badge" class="bg-emerald-500 text-black text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">LIVE</span>
-            </div>
-
-            <div class="absolute inset-0 z-0 flex items-center justify-center">
-                <model-viewer 
-                    id="pet-model"
-                    src="https://cdn.jsdelivr.net/gh/KhronosGroup/glTF-Sample-Models@master/2.0/Fox/glTF-Binary/Fox.glb" 
-                    alt="Remember Me 3D 還原分身"
-                    auto-rotate
-                    camera-controls
-                    touch-action="pan-y"
-                    autoplay
-                    animation-name="Survey"
-                    shadow-intensity="1"
-                    class="w-full h-full bg-transparent">
-                </model-viewer>
-            </div>
-
-            <div class="w-full flex justify-center gap-6 z-10">
-                <button id="call-btn" onclick="triggerCall()" class="px-8 py-2.5 rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-black font-bold text-xs tracking-widest flex items-center gap-1 shadow-lg shadow-cyan-500/20 transition">
-                    📞 呼喚 Lucky
-                </button>
-            </div>
-        </div>
-
-        <div class="mt-5 bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
-            <div class="flex justify-between items-center mb-2">
-                <label class="text-[11px] font-bold text-slate-400 tracking-wider">📊 24小時生活時間軸展示</label>
-                <span id="timeline-hour-txt" class="text-xs text-cyan-400 font-bold bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-800/30">跟隨系統</span>
-            </div>
-            <input type="range" id="time-slider" min="-1" max="23" value="-1" class="my-2" oninput="handleSliderChange(this.value)">
-            <div class="flex justify-between text-[8px] text-slate-600 mt-1 uppercase tracking-tighter">
-                <span>00:00 (深夜熟睡)</span>
-                <span>12:00 (中午用餐)</span>
-                <span>23:00 (入夜休息)</span>
-                <span>跟隨系統 (-1)</span>
-            </div>
-        </div>
-
-        <div class="text-center mt-4">
-            <p class="serif-font text-[11px] italic text-slate-400 tracking-wider">「死亡不是終點，被遺忘了才是」</p>
-        </div>
-    </div>
-
-    <script>
-        const model = document.getElementById('pet-model');
-        const habitText = document.getElementById('current-habit');
-        const sliderHourTxt = document.getElementById('timeline-hour-txt');
-        const modeBadge = document.getElementById('mode-badge');
-        const callBtn = document.getElementById('call-btn');
-        
-        let isManualMode = false;
-        let isCalledMode = false; // 控制「呼喚/返回」的狀態旗標
-        let manualHour = 0;
-        let audioCtx = null;
-
-        // 🐾 精準定義：每 4 個小時一個完整行為（時間、地點、在幹嘛與對應 3D 動畫名稱）
-        const TIME_SCHEDULE = [
-            { start: 0, end: 4, location: "漆黑安靜的客廳角落", behavior: "🌙 深夜守護與淺眠：靜靜趴在睡墊上守護家園...", anim: "Survey" },
-            { start: 4, end: 8, location: "溫馨的主臥室床邊", behavior: "🌅 晨光喚醒：在床邊醒來，伸個大大的懶腰，準備叫爸爸起床...", anim: "Survey" },
-            { start: 8, end: 12, location: "陽光灑落的客廳窗邊", behavior: "🐈 日光浴與閒置：慵懶地趴在溫暖的墊子上，輕快地散步...", anim: "Walk" },
-            { start: 12, end: 16, location: "舒適的客廳沙發上", behavior: "💤 深度午睡沉浸：整隻縮成一個毛球，香甜地陷入午後夢鄉...", anim: "Survey" },
-            { start: 16, end: 20, location: "社區公園綠意草地上", behavior: "⚡ 戶外放風玩耍：在草地上開心地邁開步伐，盡情奔跑追飛盤！", anim: "Run" },
-            { start: 20, end: 24, location: "溫暖的廚房與飯廳", behavior: "🍲 飯後撒嬌：圍著碗開心地散步，向最愛的爸爸撒嬌要摸摸...", anim: "Walk" }
-        ];
-
-        function initSystem() {
-            // 每秒更新系統時鐘
-            setInterval(() => {
-                const now = new Date();
-                if (!isManualMode) {
-                    document.getElementById('time-display').innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
-                    if (!isCalledMode) {
-                        updatePetBehavior(now.getHours());
-                    }
-                }
-            }, 1000);
-
-            // 首次加載，立即刷新當前真實作息
-            const initialHour = new Date().getHours();
-            updatePetBehavior(initialHour);
+        .status-card p { 
+            margin: 8px 0 0 0; 
+            font-size: 0.9rem; 
+            color: #555; 
+            line-height: 1.4;
+            font-weight: 400;
         }
 
-        // 核心排程演算法：每 4 小時切換一次生活大方向與模型 Clip
-        function updatePetBehavior(hour) {
-            const currentPlan = TIME_SCHEDULE.find(p => hour >= p.start && hour < p.end);
-            if (!currentPlan) return;
-
-            // 實時將「時間、地點、在幹嘛」塞進你原來的 UI 文字框中
-            habitText.innerText = `📍 [${currentPlan.location}] ${currentPlan.behavior}`;
-            
-            // 驅動 3D 狐狸模型切換對應的動畫片段 (Survey/Walk/Run)
-            if (model.animationName !== currentPlan.anim) {
-                model.animationName = currentPlan.anim;
-            }
-        }
-
-        // 當手指滑動橫向時間軸條時觸發
-        function handleSliderChange(val) {
-            const hour = parseInt(val);
-            if (hour === -1) {
-                isManualMode = false;
-                sliderHourTxt.innerText = "跟隨系統";
-                sliderHourTxt.className = "text-xs text-cyan-400 font-bold bg-cyan-950/50 px-2 py-0.5 rounded border border-cyan-800/30";
-                modeBadge.innerText = "LIVE";
-                modeBadge.className = "bg-emerald-500 text-black text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider";
-                
-                // 如果沒有被呼喚阻斷，立刻還原系統真實作息
-                if (!isCalledMode) {
-                    updatePetBehavior(new Date().getHours());
-                }
-            } else {
-                isManualMode = true;
-                manualHour = hour;
-                const displayTime = (hour < 10 ? '0' + hour : hour) + ':00:00';
-                document.getElementById('time-display').innerText = displayTime;
-                sliderHourTxt.innerText = `強制展示: ${hour} 點`;
-                sliderHourTxt.className = "text-xs text-amber-400 font-bold bg-amber-950/50 px-2 py-0.5 rounded border border-amber-800/30";
-                modeBadge.innerText = "DEMO";
-                modeBadge.className = "bg-amber-500 text-black text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider";
-                
-                if (!isCalledMode) {
-                    updatePetBehavior(hour);
-                }
-            }
-        }
-
-        // 📞 呼喚與返回原本作息雙向切換開關
-        function triggerCall() {
-            if (!isCalledMode) {
-                // 1. 【切換為呼喚模式】
-                isCalledMode = true;
-                callBtn.innerText = "🔙 返回原本作息";
-                callBtn.className = "px-8 py-2.5 rounded-full bg-gradient-to-r from-rose-500 to-red-600 text-white font-bold text-xs tracking-widest flex items-center gap-1 shadow-lg shadow-red-500/20 transition";
-                
-                habitText.innerText = '📞 視訊已接通 ‧ Lucky 聽到了呼喚！正（喵嗚～❤️）高興地朝你飛奔而來！';
+        /* 下方提案演示專用的控制台 */
+        .control-panel {
+            position: absolute;
+            bottom: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            background: rgba(20, 20, 20, 0.8);
+            padding: 20px;
+            border-radius: 24px;
+            width: 85%;
+            max-width: 480px;
+            box-shadow: 0 12px 30px rgba
